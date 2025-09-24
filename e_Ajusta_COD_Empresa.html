@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Empresas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e8e8e8 0%, #4a4a4a 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Efeito de partículas de fundo */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+            backdrop-filter: blur(15px);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 15px;
+            font-weight: 300;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .import-section {
+            padding: 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            background: rgba(102, 126, 234, 0.2);
+            backdrop-filter: blur(10px);
+            color: #333;
+            padding: 18px 35px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 8px 25px rgba(102, 126, 234, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            font-weight: 500;
+        }
+
+        .file-input-wrapper:hover {
+            transform: translateY(-3px);
+            background: rgba(102, 126, 234, 0.3);
+            box-shadow: 
+                0 15px 35px rgba(102, 126, 234, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .data-panel {
+            margin: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.8) 0%, rgba(245, 87, 108, 0.8) 100%);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 20px 25px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-header:hover {
+            background: linear-gradient(135deg, rgba(245, 87, 108, 0.8) 0%, rgba(240, 147, 251, 0.8) 100%);
+            transform: translateY(-1px);
+        }
+
+        .panel-header h3 {
+            font-size: 1.4em;
+            font-weight: 500;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel-toggle {
+            font-size: 1.6em;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .panel-content.open {
+            max-height: 80vh;
+        }
+
+        .table-container {
+            padding: 25px;
+            overflow: auto;
+            max-height: 70vh;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 0 0 20px 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .empty-state .icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.9em;
+            table-layout: fixed;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 10px;
+            text-align: left;
+            word-wrap: break-word;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            backdrop-filter: blur(5px);
+            position: relative;
+        }
+
+        th {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            vertical-align: top;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        th:first-child {
+            border-top-left-radius: 15px;
+        }
+
+        th:last-child {
+            border-top-right-radius: 15px;
+        }
+
+        /* Redimensionador de colunas */
+        .column-resizer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            cursor: col-resize;
+            background: transparent;
+            z-index: 20;
+            transition: background-color 0.2s ease;
+        }
+
+        .column-resizer:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .column-resizer.resizing {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .filter-input {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 0.8em;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .filter-input:focus {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.4);
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .filter-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        td {
+            background: rgba(255, 255, 255, 0.03);
+            transition: all 0.3s ease;
+        }
+
+        td:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        td input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            padding: 8px;
+            font-size: inherit;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        td input:focus {
+            background: rgba(255, 255, 255, 0.9);
+            outline: none;
+            border-radius: 8px;
+            box-shadow: 
+                0 0 15px rgba(102, 126, 234, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            white-space: normal;
+            overflow: visible;
+            text-overflow: initial;
+        }
+
+        /* Larguras iniciais das colunas */
+        .col-id { width: 80px; }
+        .col-nome-fantasia { width: 180px; }
+        .col-razao-social { width: 300px; }
+        .col-tipo { width: 80px; }
+        .col-cnpj { width: 150px; }
+        .col-uf { width: 60px; }
+        .col-logradouro { width: 250px; }
+        .col-numero { width: 100px; }
+        .col-bairro { width: 150px; }
+        .col-cidade { width: 150px; }
+        .col-cep { width: 100px; }
+        .col-complemento { width: 120px; }
+        .col-ddd { width: 60px; }
+        .col-telefone { width: 120px; }
+        .col-atividade { width: 300px; }
+
+        .export-section {
+            padding: 40px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.8) 0%, rgba(68, 160, 141, 0.8) 100%);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: none;
+            padding: 18px 45px;
+            font-size: 1.2em;
+            font-weight: 500;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 8px 25px rgba(78, 205, 196, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-3px);
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.9) 0%, rgba(68, 160, 141, 0.9) 100%);
+            box-shadow: 
+                0 15px 35px rgba(78, 205, 196, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .generate-btn:disabled {
+            background: rgba(200, 200, 200, 0.3);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(25px);
+            margin: 15% auto;
+            padding: 35px;
+            border-radius: 25px;
+            width: 450px;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px) scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal h3 {
+            margin-bottom: 25px;
+            color: #333;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: 500;
+        }
+
+        .separator-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .separator-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .separator-option:hover {
+            border-color: rgba(102, 126, 234, 0.5);
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .separator-option input[type="radio"] {
+            margin: 0;
+            accent-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-btn.primary {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.8) 0%, rgba(68, 160, 141, 0.8) 100%);
+            color: white;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-btn.primary:hover {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.9) 0%, rgba(68, 160, 141, 0.9) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.3);
+        }
+
+        .modal-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #333;
+        }
+
+        .modal-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .status-success {
+            background: rgba(212, 237, 218, 0.8);
+            color: #155724;
+        }
+
+        .status-error {
+            background: rgba(248, 215, 218, 0.8);
+            color: #721c24;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden-row {
+            display: none;
+        }
+
+        /* Efeitos de brilho suave */
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Indicador visual durante redimensionamento */
+        .resizing-indicator {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(102, 126, 234, 0.8);
+            z-index: 1000;
+            pointer-events: none;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="resizing-indicator" id="resizingIndicator"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>Gerenciador de Empresas</h1>
+            <p>Importe, edite e exporte dados de empresas com facilidade</p>
+        </div>
+
+        <div class="import-section">
+            <label for="fileInput" class="file-input-wrapper">
+                <input type="file" id="fileInput" accept=".txt" />
+                📁 Selecionar Arquivo TXT
+            </label>
+            <div id="statusMessage" class="status-message"></div>
+        </div>
+
+        <div class="data-panel" id="dataPanel" style="display: none;">
+            <div class="panel-header" onclick="togglePanel()">
+                <h3>Dados Importados</h3>
+                <span class="panel-toggle" id="panelToggle">▼</span>
+            </div>
+            <div class="panel-content" id="panelContent">
+                <div class="table-container">
+                    <div class="empty-state" id="emptyState">
+                        <div class="icon">📊</div>
+                        <p>Nenhum dado importado ainda.<br>Selecione um arquivo TXT para começar.</p>
+                    </div>
+                    <table id="dataTable" style="display: none;">
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="export-section">
+            <button class="generate-btn" id="generateBtn" onclick="openExportModal()" disabled>
+                GERAR
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Exportação -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <h3>Selecionar Tipo de Separador</h3>
+            <div class="separator-options">
+                <label class="separator-option">
+                    <input type="radio" name="separator" value=";" checked>
+                    <span>Ponto e vírgula (;)</span>
+                </label>
+                <label class="separator-option">
+                    <input type="radio" name="separator" value=",">
+                    <span>Vírgula (,)</span>
+                </label>
+                <label class="separator-option">
+                    <input type="radio" name="separator" value="\t">
+                    <span>Tabulação (Tab)</span>
+                </label>
+                <label class="separator-option">
+                    <input type="radio" name="separator" value="|">
+                    <span>Pipe (|)</span>
+                </label>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeExportModal()">Cancelar</button>
+                <button class="modal-btn primary" onclick="exportData()">Exportar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tableData = [];
+        let filteredData = [];
+        let headers = [];
+        let columnFilters = {};
+        let isResizing = false;
+        let currentColumn = null;
+        let startX = 0;
+        let startWidth = 0;
+
+        // Função para mostrar mensagem de status
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.style.display = 'block';
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Função para alternar o painel
+        function togglePanel() {
+            const content = document.getElementById('panelContent');
+            const toggle = document.getElementById('panelToggle');
+            
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                toggle.textContent = '▼';
+            } else {
+                content.classList.add('open');
+                toggle.textContent = '▲';
+            }
+        }
+
+        // Função para processar o arquivo
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    parseCSVData(content);
+                    showStatus('Arquivo carregado com sucesso!', 'success');
+                } catch (error) {
+                    showStatus('Erro ao processar o arquivo: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file, 'ISO-8859-1');
+        });
+
+        // Função para analisar os dados CSV
+        function parseCSVData(content) {
+            const lines = content.trim().split('\n');
+            if (lines.length === 0) {
+                throw new Error('Arquivo vazio');
+            }
+
+            // Definir cabeçalhos baseados na estrutura observada
+            headers = [
+                'ID', 'Nome Fantasia', 'Razão Social', 'Tipo', 'CNPJ', 'UF', 
+                'Logradouro', 'Número', 'Bairro', 'Cidade', 'CEP', 'Complemento',
+                'DDD', 'Telefone', 'Atividade', 'Col15', 'Col16', 'Col17', 'Data',
+                'Código', 'CNAE', 'Col21', 'Col22', 'Col23', 'Col24', 'Col25',
+                'Col26', 'Col27', 'Col28', 'Col29', 'Col30', 'Col31', 'Col32',
+                'Col33', 'Col34', 'Col35'
+            ];
+
+            tableData = lines.map(line => {
+                const columns = line.split(';');
+                // Garantir que temos o número correto de colunas
+                while (columns.length < headers.length) {
+                    columns.push('');
+                }
+                return columns;
+            });
+
+            // Resetar filtros
+            columnFilters = {};
+            filteredData = [...tableData];
+            
+            // Esconder estado vazio e mostrar tabela
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('dataTable').style.display = 'table';
+            
+            renderTable();
+            
+            // Mostrar o painel e habilitar o botão
+            document.getElementById('dataPanel').style.display = 'block';
+            document.getElementById('panelContent').classList.add('open');
+            document.getElementById('panelToggle').textContent = '▲';
+            document.getElementById('generateBtn').disabled = false;
+        }
+
+        // Função para aplicar filtros
+        function applyFilters() {
+            filteredData = tableData.filter(row => {
+                return Object.keys(columnFilters).every(columnIndex => {
+                    const filterValue = columnFilters[columnIndex];
+                    if (!filterValue) return true;
+                    
+                    const cellValue = row[columnIndex] || '';
+                    return cellValue.toLowerCase().includes(filterValue.toLowerCase());
+                });
+            });
+            renderTableBody();
+        }
+
+        // Função para filtrar colunas
+        function filterColumn(columnIndex, filterValue) {
+            if (filterValue.trim() === '') {
+                delete columnFilters[columnIndex];
+            } else {
+                columnFilters[columnIndex] = filterValue;
+            }
+            applyFilters();
+        }
+
+        // Função para renderizar a tabela
+        function renderTable() {
+            renderTableHeader();
+            renderTableBody();
+            setupColumnResizers();
+        }
+
+        // Função para renderizar o cabeçalho da tabela
+        function renderTableHeader() {
+            const tableHead = document.getElementById('tableHead');
+            tableHead.innerHTML = '';
+
+            const headerRow = document.createElement('tr');
+            headers.forEach((header, index) => {
+                const th = document.createElement('th');
+                
+                // Adicionar classes CSS para largura das colunas
+                const columnClasses = [
+                    'col-id', 'col-nome-fantasia', 'col-razao-social', 'col-tipo', 'col-cnpj', 'col-uf',
+                    'col-logradouro', 'col-numero', 'col-bairro', 'col-cidade', 'col-cep', 'col-complemento',
+                    'col-ddd', 'col-telefone', 'col-atividade'
+                ];
+                
+                if (columnClasses[index]) {
+                    th.className = columnClasses[index];
+                }
+                
+                th.innerHTML = `
+                    <div>${header}</div>
+                    <input type="text" class="filter-input" placeholder="Filtrar..." 
+                           onkeyup="filterColumn(${index}, this.value)"
+                           value="${columnFilters[index] || ''}">
+                    <div class="column-resizer" data-column="${index}"></div>
+                `;
+                headerRow.appendChild(th);
+            });
+            tableHead.appendChild(headerRow);
+        }
+
+        // Função para renderizar o corpo da tabela
+        function renderTableBody() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+
+            filteredData.forEach((row, rowIndex) => {
+                const tr = document.createElement('tr');
+                row.forEach((cell, cellIndex) => {
+                    const td = document.createElement('td');
+                    
+                    // Adicionar classes CSS para largura das colunas
+                    const columnClasses = [
+                        'col-id', 'col-nome-fantasia', 'col-razao-social', 'col-tipo', 'col-cnpj', 'col-uf',
+                        'col-logradouro', 'col-numero', 'col-bairro', 'col-cidade', 'col-cep', 'col-complemento',
+                        'col-ddd', 'col-telefone', 'col-atividade'
+                    ];
+                    
+                    if (columnClasses[cellIndex]) {
+                        td.className = columnClasses[cellIndex];
+                    }
+                    
+                    td.innerHTML = `<input type="text" value="${cell}" title="${cell}"
+                                   onchange="updateCell(${rowIndex}, ${cellIndex}, this.value)">`;
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // Função para configurar os redimensionadores de coluna
+        function setupColumnResizers() {
+            const resizers = document.querySelectorAll('.column-resizer');
+            
+            resizers.forEach(resizer => {
+                resizer.addEventListener('mousedown', initResize);
+            });
+        }
+
+        // Função para iniciar o redimensionamento
+        function initResize(e) {
+            e.preventDefault();
+            isResizing = true;
+            currentColumn = parseInt(e.target.dataset.column);
+            startX = e.clientX;
+            
+            const th = e.target.parentElement;
+            startWidth = th.offsetWidth;
+            
+            // Mostrar indicador visual
+            const indicator = document.getElementById('resizingIndicator');
+            indicator.style.left = e.clientX + 'px';
+            indicator.style.display = 'block';
+            
+            // Adicionar classe de redimensionamento
+            e.target.classList.add('resizing');
+            
+            // Adicionar event listeners globais
+            document.addEventListener('mousemove', doResize);
+            document.addEventListener('mouseup', stopResize);
+            
+            // Prevenir seleção de texto
+            document.body.style.userSelect = 'none';
+        }
+
+        // Função para redimensionar
+        function doResize(e) {
+            if (!isResizing) return;
+            
+            const diff = e.clientX - startX;
+            const newWidth = Math.max(50, startWidth + diff); // Largura mínima de 50px
+            
+            // Atualizar indicador visual
+            const indicator = document.getElementById('resizingIndicator');
+            indicator.style.left = e.clientX + 'px';
+            
+            // Atualizar largura da coluna
+            updateColumnWidth(currentColumn, newWidth);
+        }
+
+        // Função para parar o redimensionamento
+        function stopResize(e) {
+            if (!isResizing) return;
+            
+            isResizing = false;
+            currentColumn = null;
+            
+            // Esconder indicador visual
+            const indicator = document.getElementById('resizingIndicator');
+            indicator.style.display = 'none';
+            
+            // Remover classe de redimensionamento
+            const resizers = document.querySelectorAll('.column-resizer.resizing');
+            resizers.forEach(resizer => resizer.classList.remove('resizing'));
+            
+            // Remover event listeners globais
+            document.removeEventListener('mousemove', doResize);
+            document.removeEventListener('mouseup', stopResize);
+            
+            // Restaurar seleção de texto
+            document.body.style.userSelect = '';
+        }
+
+        // Função para atualizar largura da coluna
+        function updateColumnWidth(columnIndex, width) {
+            const columnClasses = [
+                'col-id', 'col-nome-fantasia', 'col-razao-social', 'col-tipo', 'col-cnpj', 'col-uf',
+                'col-logradouro', 'col-numero', 'col-bairro', 'col-cidade', 'col-cep', 'col-complemento',
+                'col-ddd', 'col-telefone', 'col-atividade'
+            ];
+            
+            if (columnClasses[columnIndex]) {
+                const className = columnClasses[columnIndex];
+                
+                // Criar ou atualizar regra CSS dinâmica
+                let styleSheet = document.getElementById('dynamic-column-styles');
+                if (!styleSheet) {
+                    styleSheet = document.createElement('style');
+                    styleSheet.id = 'dynamic-column-styles';
+                    document.head.appendChild(styleSheet);
+                }
+                
+                // Atualizar a regra CSS para esta coluna
+                const rule = `.${className} { width: ${width}px !important; }`;
+                
+                // Remover regra existente se houver
+                const rules = styleSheet.sheet.cssRules || styleSheet.sheet.rules;
+                for (let i = rules.length - 1; i >= 0; i--) {
+                    if (rules[i].selectorText === `.${className}`) {
+                        styleSheet.sheet.deleteRule(i);
+                        break;
+                    }
+                }
+                
+                // Adicionar nova regra
+                styleSheet.sheet.insertRule(rule, styleSheet.sheet.cssRules.length);
+            }
+        }
+
+        // Função para atualizar célula
+        function updateCell(rowIndex, cellIndex, newValue) {
+            // Encontrar o índice real na tableData
+            const originalRowIndex = tableData.findIndex(row => 
+                JSON.stringify(row) === JSON.stringify(filteredData[rowIndex])
+            );
+            if (originalRowIndex !== -1) {
+                tableData[originalRowIndex][cellIndex] = newValue;
+                filteredData[rowIndex][cellIndex] = newValue;
+            }
+        }
+
+        // Função para abrir modal de exportação
+        function openExportModal() {
+            document.getElementById('exportModal').style.display = 'block';
+        }
+
+        // Função para fechar modal de exportação
+        function closeExportModal() {
+            document.getElementById('exportModal').style.display = 'none';
+        }
+
+        // Função para exportar dados
+        function exportData() {
+            const selectedSeparator = document.querySelector('input[name="separator"]:checked').value;
+            let separator = selectedSeparator;
+            
+            // Converter \t para tabulação real
+            if (separator === '\\t') {
+                separator = '\t';
+            }
+
+            // Criar conteúdo do arquivo
+            let content = '';
+            
+            // Adicionar dados (sem cabeçalho, mantendo formato original)
+            tableData.forEach(row => {
+                content += row.join(separator) + '\n';
+            });
+
+            // Criar e baixar arquivo
+            const blob = new Blob([content], { type: 'text/plain;charset=windows-1252' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'empresas_exportadas.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            closeExportModal();
+            showStatus('Arquivo exportado com sucesso!', 'success');
+        }
+
+        // Fechar modal ao clicar fora
+        window.onclick = function(event) {
+            const modal = document.getElementById('exportModal');
+            if (event.target === modal) {
+                closeExportModal();
+            }
+        }
+    </script>
+</body>
+</html>
+
